@@ -2,37 +2,55 @@
 pragma solidity >=0.4.22 <0.9.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-
-contract ThankYouCard is ERC721URIStorage, Ownable {
+contract ThankYouCard is ERC721, ERC721URIStorage, Ownable {
   using Counters for Counters.Counter;
-  Counters.Counter private _tokenIds; // Default: 0
+  Counters.Counter private _tokenIds;
 
-  constructor() public ERC721("ThankYouCard", "THK") {}
+  constructor() public ERC721("ThankYouCard", "TYC") {} 
 
-  /**
-    * @dev Override _baseURI function by returning our own
-   */
-  function _baseURI() internal view virtual returns (string memory) {
-    return "YOUR_API_URL/api/erc721/";
-  }
+    function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) {
+      super._burn(tokenId);
+    }
 
-  /**
-    * @dev Mints NFTs and sends them to the recipient's address. Minting is the process of 
-    * publishing an instance of this contract on the blockchain
-   */
-  function awardCard(address recipient, string memory tokenURI) 
-        external 
+    function _setTokenURI(uint256 tokenId, string memory _tokenURI) 
+          internal 
+          virtual 
+          override(ERC721URIStorage) 
+    {
+      super._setTokenURI(tokenId, _tokenURI);
+    }
+
+    function tokenURI(uint256 tokenId) 
+          public 
+          view 
+          virtual 
+          override(ERC721, ERC721URIStorage)
+          returns (string memory) 
+    {
+      return super.tokenURI(tokenId);
+    }
+
+
+    function _baseURI() internal view virtual override(ERC721) returns (string memory) {
+      return "https://ipfs.io/ipfs/";
+    }
+
+    function mintCard(address _to)
+        public
         onlyOwner
-        returns (uint 256)
-  {
-    _tokenIds.increment();
+        returns (uint256)
+    {
+      _tokenIds.increment(); 
 
-    uint256 newCardId = _tokenIds.current();
-    _safeMint(recipient, newCardId);
-    _setTokenURI(newCardId, tokenURI);
-  
-    return newCardId;
-  }
+      uint256 newCardId = _tokenIds.current();
+
+      // _safeMint(/* arguments */);
+
+      // _setTokenURI(/* arguments */);
+
+      return newCardId;
+    }
 }

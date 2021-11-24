@@ -1,181 +1,203 @@
-// SPDX-License-Identifier: MIT
-pragma solidity >=0.4.22 <0.9.0;
+// SPDX-License-Identifier: GPL-3.0
+
+pragma solidity >=0.7.0 <0.9.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "./ThankYouCard.sol";
+// import "./ThankYouCard.sol";
 
-contract Recycle is Ownable, ThankYouCard {
+/**
+ * @title Contract for recycling electronics
+ * @author Khawla H.
+ * @notice Allows a user to put up their electronics for recycling and get rewarded
+ * @dev Recyclables will be tracked and ether will be sent as a reward
+ */
+contract Recycle is Ownable {
 
-  address public WASTE_COLLECTOR;
-  Consumer public recycler;
-  using Counters for Counters.Counter;
-  Counters.Counter private _recyclableId; // Default: 0
+    address public wasteCollector;
+    using Counters for Counters.Counter;
+    Counters.Counter private _recyclableId; // Default: 0
+    uint256 rewardAmountInWei = 1000000000000000;
 
-
-  struct Consumer {
-    address consumerAddress;
-    eRecyclable[] eRecyclables;
-    string cityCode;
-    uint totalNumOfItems;
-    State itemsStatus;
-  }
-
-  struct eRecyclable {
-    uint itemId;
-    string description;
-    uint weightInG;
-  }
-
-  struct Reward {
-    uint totalNumOfItems;
-    uint totalWeight;
-    uint amountToAward;
-  }
-
-  enum State{ Processing, Recieved, Rewarded }
-
-  mapping(address => Reward) private recyclerToReward;
-
-
-  event LogRecyclableAdded(uint itemId);
-  event LogRecieved(address recycler, State statusOfRecyclables);
-  event LogRewarded(address recipient);
-
-  /**
-  * @dev The Recycle constructor sets the `waste collector` address
-  */
-  constructor(address collectorAddress) {
-    WASTE_COLLECTOR = collectorAddress;
-  }
-
-  modifier isCollector(address _collector ) {
-    require(_collector == WASTE_COLLECTOR);
-    _;
-  }
-
-  modifier isRecycler(address _recycler) {
-    require(_recycler == recycler.consumerAddress);
-    _;
-  }
-
-  modifier minRequirementForEther(uint _totalWeight) {
-    require(_totalWeight >= 10);
-    _;
-  }
-
-  modifier minRequirementForCardNFT(uint _totalNumOfItems) {
-    require(_totalNumOfItems >= 50);
-    _;
-  }
-  
-  modifier compareWeight(address _recycler, uint _totalWeight) {
-      uint length = recycler.totalNumOfItems;
-      uint weightSum;
-      
-      for (uint i = 0; i < length; i++) {
-          weightSum = weightSum + recycler.eRecyclables[i].weightInG;
-      }
-      
-      require(weightSum == _totalWeight);
-      _;
-  }
-
-  /**
-  * @dev Allows the recycler to add their e-waste
-  */
-  function addRecyclable(string memory _itemDescription, string memory _cityCode, uint _weight) public {
-    _recyclableId.increment();
-    uint newRecyclableId = _recyclableId.current();
-    // uint newRecyclableId = 1;
-    
-    if(newRecyclableId == 1) {
-        recycler.consumerAddress = msg.sender;
-        recycler.cityCode = _cityCode;
+    struct Consumer {
+        address consumerAddress;
+        eRecyclable recyclable;
+        string cityCode;
+        State itemStatus;
     }
-    
-    recycler.eRecyclables.push(eRecyclable({
-      itemId: newRecyclableId,
-      description: _itemDescription,
-      weightInG: _weight
-    }));
-    
-    recycler.totalNumOfItems++;
-    
-    emit LogRecyclableAdded(recycler.eRecyclables[newRecyclableId - 1].itemId);
-  }
 
-  /**
-    * @dev Allows the waste collector to start processing the e-waste and triggers a Recieved event
-   */
-   function submitRecyclables() public {
-    recycler.itemsStatus = State.Recieved;
+    struct eRecyclable {
+        string description;
+        uint256 weightInKG;
+    }
 
-    emit LogRecieved(recycler.consumerAddress, recycler.itemsStatus);
-   }
+    struct Reward {
+        uint256 weightInKG;
+        uint256 amountToAward;
+    }
 
-  /**
-    * @dev Allows the waste collector to send the reward request to the admin
-   */
-   function requestReward(address _recycler, uint _totalWeight) private 
-            isCollector(msg.sender) 
-            isRecycler(_recycler) 
-            compareWeight(_recycler, _totalWeight)
-            minRequirementForEther(_totalWeight) 
-    {
-        
-    recyclerToReward[recycler.consumerAddress] = Reward({
-      totalNumOfItems: recycler.eRecyclables.length,
-      totalWeight: _totalWeight,
-      amountToAward: 1 * 10 ** 15
-    });
-    
-   }
+    enum State {
+        Processing,
+        Recieved,
+        Rewarded
+    }
 
-  /**
-    * @dev Allows the admin to reward the recycler by sending 
-   */
-   function awardRecycler() private payable onlyOwner {
-       
-      address payable recyclerAddress = payable(recycler.consumerAddress);
-      uint valueToReward = recyclerToReward[recyclerAddress].amountToAward;
+    mapping(address => Consumer) private recyclerInfo;
+    mapping(address => Reward) private recyclerToReward;
 
-      recyclerAddress.transfer(valueToReward);
-      
-      recycler.itemsStatus = State.Rewarded;
-      
-      awardCard(recyclerAddress, "TOKEN_URI");
-      
-      emit LogRewarded(recyclerAddress);
-
-   }
-   
-     /**
-    * @dev Allows user to query the status of all their items 
-    * @return the status of all the items
-    */
-   function getStateOfItems() public view returns (State) {
-       return recycler.itemsStatus;
-   }
-   
     /**
-    * @dev Allows user to query for the details of a single item based on the id
-    * @return {item description, weight of item in grams}
-    */
-   function getRecyclable(uint _itemId) public view 
-            returns (
-                    string memory description,
-                    uint weightInG
-                ) 
-    {
-        return (recycler.eRecyclables[_itemId].description, recycler.eRecyclables[_itemId].weightInG );
-    }
-    
-    // function getReward(address recyclerAddress) public view returns (uint, uint, uint) {
-    //     return (recyclerToReward[recyclerAddress].totalNumOfItems, 
-    //             recyclerToReward[recyclerAddress].totalWeight, 
-    //             recyclerToReward[recyclerAddress].amountToAward);
-    // } 
-   
+      * @notice Emitted when a recycler adds an items
+      * @param descrp name or description of item
+      * @param weightInKG weight of item in Kg
+      * @param statusOfRecyclable current status of the items
+     */
+    event LogRecyclableAdded(
+        string descrp,
+        uint256 weightInKG,
+        State statusOfRecyclable
+    );
 
+    /**
+      * @notice Emitted when a waste collector requests to reward the recycler
+      * @param recycler address of the recycler
+      * @param balanceOfRecipient current balance of the recycler
+      * @param weightInKG total weight of items recycled in Kg
+      * @param rewardAmount amount of wei to rewarded to the recycler
+      * @param statusOfRecyclable current status of the items
+     */
+    event LogRecieved(
+        address recycler,
+        uint256 balanceOfRecipient,
+        uint256 weightInKG,
+        uint256 rewardAmount,
+        State statusOfRecyclable
+    );
+
+    /**
+      * @notice Emitted when the owner rewards the recycler
+      * @param recipient address of the recycler
+      * @param balanceOfRecipient current balance of the recycler
+      * @param statusOfRecyclable current status of the items
+     */
+    event LogRewarded(
+        address recipient,
+        uint256 balanceOfRecipient,
+        State statusOfRecyclable
+    );
+
+    // @notice The Recycle constructor sets the `waste collector` address
+    constructor(address _collector) {
+        wasteCollector = _collector;
+    }
+
+    modifier isCollector(address _collector) {
+        require(_collector == wasteCollector);
+        _;
+    }
+
+    modifier minRequirementForEther(uint256 _itemWeight) {
+        require(_itemWeight >= 1); // At least 1 KG
+        _;
+    }
+
+    // modifier requirementForCardNFT(address _recycler, uint256 _totalNumOfItems) {
+    //   TO-DO: require a total of 100 items to mint an ERC721 NFT appreciation card
+    // }
+
+    modifier compareWeight(address _recycler, uint256 _itemWeight) {
+        require(recyclerInfo[_recycler].recyclable.weightInKG == _itemWeight);
+        _;
+    }
+
+    /**
+     * @notice Allows the recycler to add their e-waste
+     * @param _itemDescription a short description of the electronic
+     * @param _cityCode a 3-letter code of the city that recycler lives in
+     * @param _weight weight of the electronic equipment in KGs
+     * @dev Recycler should call this function for every item
+     */
+    function addRecyclable(
+        string memory _itemDescription,
+        string memory _cityCode,
+        uint256 _weight
+    ) public {
+
+        recyclerInfo[msg.sender].consumerAddress = msg.sender;
+
+        recyclerInfo[msg.sender].cityCode = _cityCode;
+
+        recyclerInfo[msg.sender].recyclable = 
+            eRecyclable({
+                description: _itemDescription,
+                weightInKG: _weight
+            });
+
+        eRecyclable memory tempRecyclable = recyclerInfo[msg.sender].recyclable;
+
+        emit LogRecyclableAdded(
+            tempRecyclable.description,
+            tempRecyclable.weightInKG,
+            recyclerInfo[msg.sender].itemStatus
+        );
+    }
+
+    /**
+     * @notice Allows the waste collector to send the reward request to the admin
+     * @param _recycler address of the recycler
+     * @param _weight total weight calculated by the waste collector
+     * @dev Only the waste collector can make a reward request to the contract owner
+     */
+    function requestReward(address _recycler, uint256 _weight)
+        public
+        isCollector(msg.sender)
+        compareWeight(_recycler, _weight)
+        minRequirementForEther(_weight)
+    {
+        recyclerToReward[_recycler] = Reward({
+            weightInKG: _weight,
+            amountToAward: rewardAmountInWei
+        });
+
+        recyclerInfo[_recycler].itemStatus = State.Recieved;
+
+        Reward memory currentReward = recyclerToReward[_recycler];
+        Consumer memory currentRecyclerInfo = recyclerInfo[_recycler];
+
+        emit LogRecieved(
+            currentRecyclerInfo.consumerAddress,
+            currentRecyclerInfo.consumerAddress.balance,
+            currentReward.weightInKG,
+            currentReward.amountToAward,
+            currentRecyclerInfo.itemStatus
+        );
+    }
+
+    /**
+     * @notice Allows the admin to reward the recycler by sending
+     * @param _recycler address of the recycler
+     * @dev Only owner of the contract can send the reward after request from collector
+     */
+    function awardRecycler(address _recycler) public payable onlyOwner {
+        // Get the contract's address
+        address contractAddress = address(this);
+
+        address payable recyclerAddress = payable(
+            recyclerInfo[_recycler].consumerAddress
+        );
+
+        uint256 valueToReward = recyclerToReward[recyclerAddress].amountToAward;
+
+        if (contractAddress.balance > valueToReward) {
+            recyclerAddress.transfer(valueToReward);
+            recyclerInfo[_recycler].itemStatus = State.Rewarded;
+        }
+
+        // TO-DO: Mint an ERC721 NFT card for the recycler
+
+        emit LogRewarded(
+            recyclerAddress,
+            recyclerAddress.balance,
+            recyclerInfo[_recycler].itemStatus
+        );
+    }
 }
