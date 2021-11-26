@@ -64,8 +64,8 @@ The objective of the project is to incentivise people to recycle their e-waste, 
 4. The GA must approve the transfer of eth before it gets sent to the consumer's address
 
 ## Environment variables for deploying on a testnet
-ACCOUNT_MNEMONIC=
-RINKEBY_ENDPOINT=
+- ACCOUNT_MNEMONIC=
+- RINKEBY_ENDPOINT=
 
 ## To-do features
 - `rewardCard()` that will mint an [NFT appreciation card](https://ipfs.io/ipfs/QmRB5cAYVmYy7dgmyYyNWaKwZ7kt7fGRyW5CTtfHaqDYo5?filename=thankyou-card-nft.png) for when over a 100 items are recycled 
