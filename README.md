@@ -2,7 +2,8 @@
 ## App Link
 https://khawlahssn.github.io/blockchain-developer-bootcamp-final-project/
 
-## Screencast recording
+## Screencast
+https://www.youtube.com/watch?v=i6o3O2WV0mE
 ## Running the project locally
 ### Pre-requisties
 - Node.js >= 14
