@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0
 
-pragma solidity >=0.7.0 <0.9.0;
+pragma solidity 0.8.4;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
-// import "./ThankYouCard.sol";
 
 /**
  * @title Contract for recycling electronics
@@ -13,11 +11,8 @@ import "@openzeppelin/contracts/utils/Counters.sol";
  * @dev Recyclables will be tracked and ether will be sent as a reward
  */
 contract Recycle is Ownable {
-
     address public wasteCollector;
-    using Counters for Counters.Counter;
-    Counters.Counter private _recyclableId; // Default: 0
-    uint256 rewardAmountInWei = 1000000000000000;
+    uint256 private rewardAmountInWei = 1000000000000000;
 
     struct Consumer {
         address consumerAddress;
@@ -46,10 +41,10 @@ contract Recycle is Ownable {
     mapping(address => Reward) private recyclerToReward;
 
     /**
-      * @notice Emitted when a recycler adds an items
-      * @param descrp name or description of item
-      * @param weightInKG weight of item in Kg
-      * @param statusOfRecyclable current status of the items
+     * @notice Emitted when a recycler adds an items
+     * @param descrp name or description of item
+     * @param weightInKG weight of item in Kg
+     * @param statusOfRecyclable current status of the items
      */
     event LogRecyclableAdded(
         string descrp,
@@ -58,12 +53,12 @@ contract Recycle is Ownable {
     );
 
     /**
-      * @notice Emitted when a waste collector requests to reward the recycler
-      * @param recycler address of the recycler
-      * @param balanceOfRecipient current balance of the recycler
-      * @param weightInKG total weight of items recycled in Kg
-      * @param rewardAmount amount of wei to rewarded to the recycler
-      * @param statusOfRecyclable current status of the items
+     * @notice Emitted when a waste collector requests to reward the recycler
+     * @param recycler address of the recycler
+     * @param balanceOfRecipient current balance of the recycler
+     * @param weightInKG total weight of items recycled in Kg
+     * @param rewardAmount amount of wei to rewarded to the recycler
+     * @param statusOfRecyclable current status of the items
      */
     event LogRecieved(
         address recycler,
@@ -74,10 +69,10 @@ contract Recycle is Ownable {
     );
 
     /**
-      * @notice Emitted when the owner rewards the recycler
-      * @param recipient address of the recycler
-      * @param balanceOfRecipient current balance of the recycler
-      * @param statusOfRecyclable current status of the items
+     * @notice Emitted when the owner rewards the recycler
+     * @param recipient address of the recycler
+     * @param balanceOfRecipient current balance of the recycler
+     * @param statusOfRecyclable current status of the items
      */
     event LogRewarded(
         address recipient,
@@ -91,23 +86,29 @@ contract Recycle is Ownable {
     }
 
     modifier isCollector(address _collector) {
-        require(_collector == wasteCollector);
+        require(
+            _collector == wasteCollector,
+            "Only collector can make this request"
+        );
+        _;
+    }
+
+    modifier compareWeight(address _recycler, uint256 _itemWeight) {
+        require(
+            recyclerInfo[_recycler].recyclable.weightInKG == _itemWeight,
+            "The weights are NOT matching"
+        );
         _;
     }
 
     modifier minRequirementForEther(uint256 _itemWeight) {
-        require(_itemWeight >= 1); // At least 1 KG
+        require(_itemWeight >= 1, "The weight must be at least 1 KG");
         _;
     }
 
     // modifier requirementForCardNFT(address _recycler, uint256 _totalNumOfItems) {
     //   TO-DO: require a total of 100 items to mint an ERC721 NFT appreciation card
     // }
-
-    modifier compareWeight(address _recycler, uint256 _itemWeight) {
-        require(recyclerInfo[_recycler].recyclable.weightInKG == _itemWeight);
-        _;
-    }
 
     /**
      * @notice Allows the recycler to add their e-waste
@@ -121,16 +122,14 @@ contract Recycle is Ownable {
         string memory _cityCode,
         uint256 _weight
     ) public {
-
         recyclerInfo[msg.sender].consumerAddress = msg.sender;
 
         recyclerInfo[msg.sender].cityCode = _cityCode;
 
-        recyclerInfo[msg.sender].recyclable = 
-            eRecyclable({
-                description: _itemDescription,
-                weightInKG: _weight
-            });
+        recyclerInfo[msg.sender].recyclable = eRecyclable({
+            description: _itemDescription,
+            weightInKG: _weight
+        });
 
         eRecyclable memory tempRecyclable = recyclerInfo[msg.sender].recyclable;
 
@@ -187,10 +186,17 @@ contract Recycle is Ownable {
 
         uint256 valueToReward = recyclerToReward[recyclerAddress].amountToAward;
 
-        if (contractAddress.balance > valueToReward) {
-            recyclerAddress.transfer(valueToReward);
-            recyclerInfo[_recycler].itemStatus = State.Rewarded;
-        }
+        require(
+            contractAddress.balance > valueToReward,
+            "Contract does not have enough funds"
+        );
+        require(
+            recyclerInfo[_recycler].itemStatus == State.Recieved,
+            "Collector did not recieve items"
+        );
+
+        recyclerAddress.transfer(valueToReward);
+        recyclerInfo[_recycler].itemStatus = State.Rewarded;
 
         // TO-DO: Mint an ERC721 NFT card for the recycler
 
