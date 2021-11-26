@@ -20,7 +20,7 @@ function App() {
   const [code, setCode] = useState("");
   const [weight, setWeight] = useState("");
   const [addressToReward, setAddress] = useState("");
-  const [amountToReward, setAmount] = useState("");
+  // const [amountToReward, setAmount] = useState("");
   const [collector, setCollector] = useState("");
   const [addressToRequestRewardFor, setRequestAddress] = useState("");
   const [weightInputByCollector, setweightInputByCollector] = useState("");
@@ -219,7 +219,7 @@ function App() {
   const handleAdminSubmission = async (event) => {
     event.preventDefault();
 
-    if (addressToReward === "" || amountToReward === "") {
+    if (addressToReward === "") {
       showMessage(listOfMessages[0]);
     } else {
       setRewardingUser(true);
@@ -426,13 +426,13 @@ function App() {
                       onChange={(event) => setAddress(event.target.value)}
                     />{" "}
                   </div>
-                  <div className="input-area">
+                  {/* <div className="input-area">
                     <label>Enter amount to be rewarded (in Ether):</label>{" "}
                     <input
                       value={amountToReward}
                       onChange={(event) => setAmount(event.target.value)}
                     />{" "}
-                  </div>
+                  </div> */}
                   <div className="input-area">
                     <button
                       className="btn primaryBtn"

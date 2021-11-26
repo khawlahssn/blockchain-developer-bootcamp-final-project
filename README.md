@@ -53,6 +53,12 @@ https://khawlahssn.github.io/blockchain-developer-bootcamp-final-project/
 ├── ./truffle-config.js
 └── ./yarn.lock
 ```
+
+## Transaction Flow
+1. User submits a description of their item and specify their location
+2. Based on the drop-off location given to the user, the assigned e-waste collector will recieve the item, measures it, and submits a request to the admin
+3. The user's and collector's measurements should be equal after rounding
+4. Admin/authority recevies the request from the collector then rewards the recycler with `0.001 ether`
 ## Project Description
 E-waste consists of electrical and electronic equipments (EEEs) that have been discarded by their owners because they're either unwanted or have reached the end of their useful life. According to the [UN](https://www.unep.org/news-and-stories/press-release/un-report-time-seize-opportunity-tackle-challenge-e-waste), the world produces about 50 million tonnes a year of e-waste and only 20% is formally recycled with 80% either ending up in landfill or being informally recycled. EEEs are made of components that have large amounts of heavy metals and toxic substances such as lead and mercury which is why it is so damaging to the environment and has a negative effect on human health. The cheapest recyling option for many countries is to send e-waste overseas to developing countires, hence putting the workers health at risk.
 
@@ -69,3 +75,4 @@ The objective of the project is to incentivise people to recycle their e-waste, 
 
 ## To-do features
 - `rewardCard()` that will mint an [NFT appreciation card](https://ipfs.io/ipfs/QmRB5cAYVmYy7dgmyYyNWaKwZ7kt7fGRyW5CTtfHaqDYo5?filename=thankyou-card-nft.png) for when over a 100 items are recycled 
+- Instead of having the `amountToAward` fixed, it checks the current value of around `10$` in ether
