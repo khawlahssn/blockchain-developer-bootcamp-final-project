@@ -4,6 +4,10 @@ https://khawlahssn.github.io/blockchain-developer-bootcamp-final-project/
 
 ## Screencast
 https://www.youtube.com/watch?v=i6o3O2WV0mE
+
+## Ethereum Address for Certification
+0x8D7544695d6aBDb17891180F53cD821a27dbFff0
+
 ## Running the project locally
 ### Pre-requisties
 - Node.js >= 14
