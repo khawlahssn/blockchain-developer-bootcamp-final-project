@@ -20,6 +20,7 @@ https://www.youtube.com/watch?v=i6o3O2WV0mE
 - `truffle develop`
 - To deploy the contract on Ganache: `migrate --development`
 - To run the tests: `test`
+- To deploy the contract to a testnet, please change the address passed to the contructor in the `migrations` directory to any address of your own to be able to make the reward requests 
 
 ### Front-end
 - cd `client`
